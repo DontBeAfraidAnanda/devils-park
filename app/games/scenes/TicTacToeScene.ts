@@ -32,8 +32,8 @@ export class TicTacToeScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('X', '/assets/x.png');
-    this.load.image('O', '/assets/o.png');
+    this.load.image('X', '/assets/tictactoe/x.png');
+    this.load.image('O', '/assets/tictactoe/o.png');
   }
 
   create() {

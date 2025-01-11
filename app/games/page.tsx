@@ -4,7 +4,7 @@ export default function page() {
   return (
     <div className="flex flex-col items-center p-14">
       <h1 className="mb-16 text-3xl font-semibold">GameList</h1>
-      <div className="flex gap-5">
+      <div className="grid gap-8 grid-cols-3 text-center">
         <Link href="/games/tictactoe">Tic Tac Toe</Link>
         <Link href="/games/dodge">Dodge</Link>
       </div>

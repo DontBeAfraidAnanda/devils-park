@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-const TicTacToeGame = dynamic(() => import('../components/TicTacToeGame'), { ssr: false });
+const TicTacToeGame = dynamic(() => import('./components/TicTacToeGame'), { ssr: false });
 
 export default function page() {
   return (

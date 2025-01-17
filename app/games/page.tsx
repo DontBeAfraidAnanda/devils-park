@@ -7,6 +7,7 @@ export default function page() {
       <div className="grid gap-8 grid-cols-3 text-center">
         <Link href="/games/tictactoe">Tic Tac Toe</Link>
         <Link href="/games/dodge">Dodge</Link>
+        <Link href="/games/twelve-janggi">Twelve Janggi</Link>
       </div>
     </div>
   );

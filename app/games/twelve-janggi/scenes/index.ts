@@ -1,0 +1,1 @@
+export { TwelveJanggiGameScene } from './TwelveJanggiGameScene';

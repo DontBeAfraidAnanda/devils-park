@@ -7,7 +7,10 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
   private cellHeight: number;
   private rows: number = 3;
   private cols: number = 4;
-  private boardPieces: string[][] = [];
+  private boardInfo: {
+    piece: string;
+    player: 'A' | 'B' | null;
+  }[][] = [];
   private highlights: Phaser.GameObjects.Rectangle[] = [];
 
   constructor() {
@@ -37,9 +40,12 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
   // 보드 초기화
   private initBoard() {
     for (let i = 0; i < this.rows; i++) {
-      this.boardPieces[i] = [];
+      this.boardInfo[i] = [];
       for (let j = 0; j < this.cols; j++) {
-        this.boardPieces[i][j] = '';
+        this.boardInfo[i][j] = {
+          piece: '',
+          player: null,
+        };
       }
     }
   }
@@ -97,7 +103,10 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
             this.showValidMoves(text);
           });
 
-          this.boardPieces[row][col] = piece;
+          this.boardInfo[row][col] = {
+            piece: piece,
+            player: player,
+          };
         }
       }
     }
@@ -112,7 +121,7 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
   }
 
   // 유효한 이동 경로 계산
-  private getValidMoves(row: number, col: number, piece: string): [number, number][] {
+  private getValidMoves(row: number, col: number, piece: string, player: 'A' | 'B'): [number, number][] {
     const validMoves: [number, number][] = [];
 
     switch (piece) {
@@ -142,7 +151,8 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
         break;
 
       case '子': // 자
-        if (row > 0) validMoves.push([row - 1, col]); // 앞
+        if (col > 0 && player === 'A') validMoves.push([row, col + 1]);
+        if (col < this.cols - 1 && player === 'B') validMoves.push([row, col - 1]);
         break;
 
       case '侯': // 후
@@ -164,8 +174,9 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
     const row = selectedPiece.getData('row') as number;
     const col = selectedPiece.getData('col') as number;
     const piece = selectedPiece.getData('piece') as string;
+    const player = selectedPiece.getData('player') as 'A' | 'B';
 
-    const validMoves = this.getValidMoves(row, col, piece);
+    const validMoves = this.getValidMoves(row, col, piece, player);
 
     validMoves.forEach(([newRow, newCol]) => {
       const targetPiece = this.getPieceAt(newRow, newCol);
@@ -209,15 +220,20 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
 
   // 특정 위치에 있는 말 확인
   private getPieceAt(row: number, col: number): Phaser.GameObjects.Text | null {
-    const piece = this.boardPieces[row][col];
-    return piece ? this.findPiece(piece) : null;
+    const { piece, player } = this.boardInfo[row][col];
+    if (!piece || !player) return null;
+    return piece ? this.findPiece(piece, player) : null;
   }
 
-  // 말 객체 찾기
-  private findPiece(piece: string): Phaser.GameObjects.Text {
+  // 말 객체 찾기 (piece와 player 기준)
+  private findPiece(piece: string, player: 'A' | 'B'): Phaser.GameObjects.Text | null {
     return this.children.list.find((child: Phaser.GameObjects.GameObject) => {
-      return child instanceof Phaser.GameObjects.Text && child.getData('piece') === piece;
-    }) as Phaser.GameObjects.Text;
+      return (
+        child instanceof Phaser.GameObjects.Text &&
+        child.getData('piece') === piece &&
+        child.getData('player') === player
+      );
+    }) as Phaser.GameObjects.Text | null;
   }
 
   // 말 이동 처리
@@ -226,12 +242,18 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
     const currentCol = piece.getData('col') as number;
 
     // 기존 위치 비우기
-    this.boardPieces[currentRow][currentCol] = '';
+    this.boardInfo[currentRow][currentCol] = {
+      piece: '',
+      player: null,
+    };
 
     // 새 위치에 말 배치
     piece.setData('row', newRow);
     piece.setData('col', newCol);
-    this.boardPieces[newRow][newCol] = piece.getData('piece') as string;
+    this.boardInfo[newRow][newCol] = {
+      piece: piece.getData('piece'),
+      player: piece.getData('player'),
+    };
 
     // 화면에서 말 이동
     piece.setPosition(newCol * this.cellWidth + this.cellWidth / 2, newRow * this.cellHeight + this.cellHeight / 2);
@@ -253,8 +275,10 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
   private capturePiece(targetPiece: Phaser.GameObjects.Text) {
     const row = targetPiece.getData('row') as number;
     const col = targetPiece.getData('col') as number;
-    this.boardPieces[row][col] = '';
+    this.boardInfo[row][col] = {
+      piece: '',
+      player: null,
+    };
     targetPiece.destroy();
-    console.log(`잡은 말(${targetPiece.getData('piece')})을 제거했습니다.`);
   }
 }

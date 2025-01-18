@@ -120,50 +120,77 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
     return 'B'; // 나머지는 B플레이어
   }
 
+  // 장 이동 규칙
+  private getJangMoves(row: number, col: number): [number, number][] {
+    const moves: [number, number][] = [];
+    if (row > 0) moves.push([row - 1, col]); // 위
+    if (row < this.rows - 1) moves.push([row + 1, col]); // 아래
+    if (col > 0) moves.push([row, col - 1]); // 왼쪽
+    if (col < this.cols - 1) moves.push([row, col + 1]); // 오른쪽
+    return moves;
+  }
+
+  // 상 이동 규칙
+  private getSangMoves(row: number, col: number): [number, number][] {
+    const moves: [number, number][] = [];
+    if (row > 0 && col > 0) moves.push([row - 1, col - 1]); // 왼쪽 위
+    if (row > 0 && col < this.cols - 1) moves.push([row - 1, col + 1]); // 오른쪽 위
+    if (row < this.rows - 1 && col > 0) moves.push([row + 1, col - 1]); // 왼쪽 아래
+    if (row < this.rows - 1 && col < this.cols - 1) moves.push([row + 1, col + 1]); // 오른쪽 아래
+    return moves;
+  }
+
+  // 왕 이동 규칙
+  private getWangMoves(row: number, col: number): [number, number][] {
+    const moves: [number, number][] = [];
+    moves.push(...this.getJangMoves(row, col)); // 장과 동일한 4방향
+    moves.push(...this.getSangMoves(row, col)); // 상과 동일한 대각선 4방향
+    return moves;
+  }
+
+  // 자 이동 규칙
+  private getJaMoves(row: number, col: number, player: 'A' | 'B'): [number, number][] {
+    const moves: [number, number][] = [];
+    if (player === 'A' && col < this.cols - 1) moves.push([row, col + 1]); // 오른쪽
+    if (player === 'B' && col > 0) moves.push([row, col - 1]); // 왼쪽
+    return moves;
+  }
+
+  // 후 이동 규칙
+  private getHuMoves(row: number, col: number, player: 'A' | 'B'): [number, number][] {
+    const moves: [number, number][] = [];
+    moves.push(...this.getJangMoves(row, col)); // 장과 동일한 4방향
+    if (player === 'A') {
+      if (row > 0 && col < this.cols - 1) moves.push([row - 1, col + 1]); // 오른쪽 위
+      if (row < this.rows - 1 && col < this.cols - 1) moves.push([row + 1, col + 1]); // 오른쪽 아래
+    } else {
+      if (row > 0 && col > 0) moves.push([row - 1, col - 1]); // 왼쪽 위
+      if (row < this.rows - 1 && col > 0) moves.push([row + 1, col - 1]); // 왼쪽 아래
+    }
+    return moves;
+  }
+
   // 유효한 이동 경로 계산
   private getValidMoves(row: number, col: number, piece: string, player: 'A' | 'B'): [number, number][] {
-    const validMoves: [number, number][] = [];
-
     switch (piece) {
       case '將': // 장
-        if (row > 0) validMoves.push([row - 1, col]); // 위로
-        if (row < this.rows - 1) validMoves.push([row + 1, col]); // 아래로
-        if (col > 0) validMoves.push([row, col - 1]); // 왼쪽으로
-        if (col < this.cols - 1) validMoves.push([row, col + 1]); // 오른쪽으로
-        break;
+        return this.getJangMoves(row, col);
 
       case '相': // 상
-        if (row > 0 && col > 0) validMoves.push([row - 1, col - 1]); // 왼쪽 위
-        if (row > 0 && col < this.cols - 1) validMoves.push([row - 1, col + 1]); // 오른쪽 위
-        if (row < this.rows - 1 && col > 0) validMoves.push([row + 1, col - 1]); // 왼쪽 아래
-        if (row < this.rows - 1 && col < this.cols - 1) validMoves.push([row + 1, col + 1]); // 오른쪽 아래
-        break;
+        return this.getSangMoves(row, col);
 
       case '王': // 왕
-        if (row > 0) validMoves.push([row - 1, col]); // 위로
-        if (row < this.rows - 1) validMoves.push([row + 1, col]); // 아래로
-        if (col > 0) validMoves.push([row, col - 1]); // 왼쪽으로
-        if (col < this.cols - 1) validMoves.push([row, col + 1]); // 오른쪽으로
-        if (row > 0 && col > 0) validMoves.push([row - 1, col - 1]); // 왼쪽 위
-        if (row > 0 && col < this.cols - 1) validMoves.push([row - 1, col + 1]); // 오른쪽 위
-        if (row < this.rows - 1 && col > 0) validMoves.push([row + 1, col - 1]); // 왼쪽 아래
-        if (row < this.rows - 1 && col < this.cols - 1) validMoves.push([row + 1, col + 1]); // 오른쪽 아래
-        break;
+        return this.getWangMoves(row, col);
 
       case '子': // 자
-        if (col > 0 && player === 'A') validMoves.push([row, col + 1]);
-        if (col < this.cols - 1 && player === 'B') validMoves.push([row, col - 1]);
-        break;
+        return this.getJaMoves(row, col, player);
 
       case '侯': // 후
-        if (row > 0) validMoves.push([row - 1, col]); // 앞
-        if (row < this.rows - 1) validMoves.push([row + 1, col]); // 뒤
-        if (col > 0) validMoves.push([row, col - 1]); // 왼쪽
-        if (col < this.cols - 1) validMoves.push([row, col + 1]); // 오른쪽
-        break;
-    }
+        return this.getHuMoves(row, col, player);
 
-    return validMoves;
+      default:
+        return [];
+    }
   }
 
   // 이동 가능한 위치 하이라이트 표시
@@ -225,7 +252,7 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
     return piece ? this.findPiece(piece, player) : null;
   }
 
-  // 말 객체 찾기 (piece와 player 기준)
+  // 말 객체 찾기
   private findPiece(piece: string, player: 'A' | 'B'): Phaser.GameObjects.Text | null {
     return this.children.list.find((child: Phaser.GameObjects.GameObject) => {
       return (
@@ -240,6 +267,8 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
   private movePiece(piece: Phaser.GameObjects.Text, newRow: number, newCol: number) {
     const currentRow = piece.getData('row') as number;
     const currentCol = piece.getData('col') as number;
+    const currentPiece = piece.getData('piece') as string;
+    const currentPlayer = piece.getData('player') as 'A' | 'B';
 
     // 기존 위치 비우기
     this.boardInfo[currentRow][currentCol] = {
@@ -254,6 +283,16 @@ export class TwelveJanggiGameScene extends Phaser.Scene {
       piece: piece.getData('piece'),
       player: piece.getData('player'),
     };
+
+    // 子가 상대 진영으로 이동하면 侯로 변경
+    if (currentPiece === '子' && currentPlayer === 'A' && newCol === 3) {
+      piece.setData('piece', '侯');
+      piece.setText('侯');
+    }
+    if (currentPiece === '子' && currentPlayer === 'B' && newCol === 0) {
+      piece.setData('piece', '侯');
+      piece.setText('侯');
+    }
 
     // 화면에서 말 이동
     piece.setPosition(newCol * this.cellWidth + this.cellWidth / 2, newRow * this.cellHeight + this.cellHeight / 2);
